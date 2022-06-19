@@ -3,28 +3,35 @@ use std::env;
 use std::path::Path;
 use itertools::{concat, Itertools};
 use std::fmt;
+use nix::unistd::getuid;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();
     let clone_args: Vec<String> = env::args().collect();
 
-    let a = Command::new("xbps-query")
-            .arg("-Rs")
-            .arg("neofetch")
-            .status()
-            .expect("Didn't work.");
-
-    println!("{:?}", a);
+//    println!("{}", getuid());
 
     if args.len() >= 2 { // detect action
-            let action = &clone_args[1];
+        let action = &clone_args[1];
 
-            if action.eq("install") { // detect action
+        /* if getuid() != 0 {
+             println!("You must be root to execute {}", args[1]);
+            exit(128);
+        } */
+
+
+        if action.eq("install") { // detect action
                 // pass
-            } else if action.eq("remove") {
+        } else if action.eq("remove") {
                 // pass
-            } else if action.eq("update") {
-                // pass
+        } else if action.eq("update") {
+                if args.len() >= 3 {
+                    Command::new("xbps-install")
+                        .arg("-Suy")
+                        .output()
+                        .expect("Couldn't execute xbps");
+                    exit(0);
+                }
             } else {
                 println!("No argument called '{0}' found.", action);
                 exit(1);
@@ -64,10 +71,27 @@ fn main() {
                             .output()
                             .expect("Didn't work.");
 
-                    // } else if {
-                    //     TODO: use xbps w/ Void Repo if package not in default repo
                     } else {
-                        println!("{0} is not in any repository.", args[package_to_install]);
+                        if action.eq("install") {
+                            Command::new("xbps-install")
+                                .arg("-Sy")
+                                .arg(&args[package_to_install])
+                                .output()
+                                .expect("Couldn't execute xbps");
+                        } else if action.eq("remove") {
+                            Command::new("xbps-remove")
+                                .arg("-y")
+                                .arg(&args[package_to_install])
+                                .output()
+                                .expect("Couldn't execute xbps");
+
+                        } else if action.eq("update") {
+                            Command::new("xbps-install")
+                                .arg("-Sy")
+                                .arg(&args[package_to_install])
+                                .output()
+                                .expect("Couldn't execute xbps");
+                        }
                     }
 
                     package_to_install = package_to_install + 1;

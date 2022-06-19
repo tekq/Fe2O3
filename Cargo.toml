@@ -1,10 +1,11 @@
 [package]
 name = "Fe2O3"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 itertools = "0.10.2"
-url = "2.2.2"
+online = "3.0.1"
+nix = "0.15.0"
