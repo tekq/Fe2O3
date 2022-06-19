@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.10.2"
-url = "1.5.1"
+url = "2.2.2"
