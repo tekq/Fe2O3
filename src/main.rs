@@ -1,8 +1,6 @@
 use std::process::{Command, exit};
 use std::env;
 use std::path::Path;
-use itertools::{concat, Itertools};
-use std::fmt;
 use nix::unistd::getuid;
 
 fn main() {
@@ -70,7 +68,7 @@ fn main() {
                 while package_to_install < args.len() {
                     println!("{0}ing package {1}/{2}", action, package_to_install + 1, args.len()); // print action and the number of packages remaining
 
-                    let mut path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
+                    let path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
 
                     if Path::new(&path).exists() {
                         if action.to_string().eq("install"){
