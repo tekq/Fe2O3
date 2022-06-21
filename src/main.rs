@@ -6,18 +6,18 @@ use std::fmt;
 use nix::unistd::getuid;
 
 fn main() {
-    let mut args: Vec<String> = env::args().collect();
-    let clone_args: Vec<String> = env::args().collect();
-
-//    println!("{}", getuid());
+    let mut args: Vec<String> = env::args().collect(); // take args in a vector
+    let clone_args: Vec<String> = env::args().collect(); // have an imutable version of args
 
     if args.len() >= 2 { // detect action
         let action = &clone_args[1];
 
-        /* if getuid() != 0 {
-             println!("You must be root to execute {}", args[1]);
+        if getuid().to_string().eq("0") {
+            // pass
+        } else {
+            println!("You must be root to execute command: '{}'", args[1]);
             exit(128);
-        } */
+        }
 
 
         if action.eq("install") { // detect action
@@ -26,10 +26,28 @@ fn main() {
                 // pass
         } else if action.eq("update") {
                 if args.len() >= 3 {
+                    println!("Updating Void packages 1/3");
                     Command::new("xbps-install")
                         .arg("-Suy")
                         .output()
                         .expect("Couldn't execute xbps");
+
+                    println!("Removing old repository 2/3");
+                    Command::new("rm")
+                        .arg("-rf")// forced recursively remove
+                        .arg("/etc/elements/repos/Nitrogen")// path to remove
+                        .output()
+                        .expect("Couldn't remove repository.");
+
+                    println!("ReClone Repository 3/3");
+                    Command::new("git")
+                        .arg("clone")
+                        .arg("https://github.com/NitrogenLinux/elements-repo.git")// Nitrogen Linux's main repository
+                        .arg("/etc/elements/repos/Nitrogen")// path to clone to
+                        .output()
+                        .expect("Couldn't clone the repository.");
+
+                    println!("Update complete: err_code: 0");
                     exit(0);
                 }
             } else {
@@ -50,26 +68,27 @@ fn main() {
                 let mut package_to_install = 0;
 
                 while package_to_install < args.len() {
-                    println!("{0}ing package {1}/{2}", action, package_to_install + 1, args.len());
-                    // println!("{}", "test".to_owned() + &args[package_to_install]);
+                    println!("{0}ing package {1}/{2}", action, package_to_install + 1, args.len()); // print action and the number of packages remaining
+
                     let mut path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
 
                     if Path::new(&path).exists() {
-                        let exec = ""; // declare exec so compiler doesn't scream
-
-                        if action.eq("install"){
-                            let exec = path.to_owned() + "/build";
-                        } else if action.eq("remove") {
-                            let exec = path.to_owned() + "/remove";
-                        } else if action.eq("update") {
-                            let exec = path.to_owned() + "/build";
+                        if action.to_string().eq("install"){
+                            Command::new("bash")
+                                .arg(path.to_owned() + "/build")
+                                .output()
+                                .expect("Didn't work.");
+                        } else if action.to_string().eq("remove") {
+                            Command::new("bash")
+                                .arg(path.to_owned() + "/remove")
+                                .output()
+                                .expect("Didn't work.");
+                        } else if action.to_string().eq("update") {
+                            Command::new("bash")
+                                .arg(path.to_owned() + "/build")
+                                .output()
+                                .expect("Didn't work.");
                         }
-
-
-                        Command::new("bash")
-                            .arg(&exec)
-                            .output()
-                            .expect("Didn't work.");
 
                     } else {
                         if action.eq("install") {
