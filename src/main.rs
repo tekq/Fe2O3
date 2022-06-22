@@ -1,11 +1,25 @@
 use std::process::{Command, exit};
-use std::env;
+use std::io;
 use std::path::Path;
+use std::io::prelude::*;
+use std::fs::File;
 use nix::unistd::getuid;
+use std::env;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
     let clone_args: Vec<String> = env::args().collect(); // have an imutable version of args
+    // let mut package_db = String::new();
+    // let mut pkg_db = std::fs::File::create("/etc/elements/.pkg.db");
+
+    // pkg_db.write(b"Bytes\n").unwrap();
+
+    // pkg_db.write_all("Hi\n".as_bytes()).expect("write failed");
+
+    // package_db_path.read_to_string(&mut package_db).expect("The string cannot be read");
+
+    // println!("{:?}", pkg_db);
+
 
     if args.len() >= 2 { // detect action
         let action = &clone_args[1];
@@ -18,11 +32,11 @@ fn main() {
         }
 
 
-        if action.eq("install") { // detect action
+        if action.to_lowercase().eq("install") { // detect action
                 // pass
-        } else if action.eq("remove") {
+        } else if action.to_lowercase().eq("remove") {
                 // pass
-        } else if action.eq("update") {
+        } else if action.to_lowercase().eq("update") {
                 if args.len() >= 3 {
                     println!("Updating Void packages 1/3");
                     Command::new("xbps-install")
@@ -58,30 +72,32 @@ fn main() {
                 args.remove(0); // remove argument
 
                 if args.len() == 1 {
-                   println!("{0}ing: {1:?}", action, args);
+                   println!("{0}ing: {1:?}", action.to_lowercase(), args);
                 } else {
-                    println!("{0}ing {1} packages: {2:?}", action, args.len(), args);
+                    println!("{0}ing {1} packages: {2:?}", action.to_lowercase(), args.len(), args);
                 }
 
                 let mut package_to_install = 0;
 
                 while package_to_install < args.len() {
-                    println!("{0}ing package {1}/{2}", action, package_to_install + 1, args.len()); // print action and the number of packages remaining
-
                     let path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
 
                     if Path::new(&path).exists() {
                         if action.to_string().eq("install"){
+                            // ver =
+                            // println!("Installing package {0}-{1} {2}/{3}", &args[package_to_install], ver, package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
                                 .arg(path.to_owned() + "/build")
                                 .output()
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("remove") {
+                            println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
                                 .arg(path.to_owned() + "/remove")
                                 .output()
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("update") {
+                            println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
                                 .arg(path.to_owned() + "/build")
                                 .output()
@@ -118,8 +134,10 @@ fn main() {
                 }
 
             } else {
-                println!("No package specified to {0}.", action);
+                println!("No package specified to {0}.", action.to_lowercase());
                 exit(2);
             }
-        }
+        } else {
+            println!("No command specified.");
+    }
 }
