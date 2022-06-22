@@ -1,21 +1,9 @@
 use std::process::{Command, exit};
-use std::io;
 use std::path::Path;
 use std::io::prelude::*;
 use std::fs::File;
 use nix::unistd::getuid;
 use std::env;
-
-fn open_package_database() -> std::io::Result<()> {
-    let mut file = File::create("/tmp/temp")?;
-    let buffer = "pkg";
-    file.write_all(buffer.as_bytes())?;
-
-    let mut input = File::open("/tmp/temp")?;
-    let mut input_buffer = String::new();
-    input.read_to_string(&mut input_buffer)?;
-    Ok(())
-}
 
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
@@ -80,10 +68,17 @@ fn main() {
                 let mut package_to_install = 0;
 
                 while package_to_install < args.len() {
+                    let mut pkg_db_path = std::fs::File::open("/etc/elements/.pkg.db").unwrap();
+                    let mut updated_pkg_db = String::new();
+                    pkg_db_path.read_to_string(&mut updated_pkg_db).unwrap();
+
                     let path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
 
                     if Path::new(&path).exists() {
                         if action.to_string().eq("install"){
+                            let mut updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
+
+                            write_to_package_db(updated_pkg_db);
                             // ver =
                             // println!("Installing package {0}-{1} {2}/{3}", &args[package_to_install], ver, package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
@@ -140,4 +135,16 @@ fn main() {
         } else {
             println!("No command specified.");
     }
+}
+
+
+fn write_to_package_db(package: String) -> std::io::Result<()> {
+    println!("Package = {}", package);
+    let mut package_db = std::fs::File::create("/etc/elements/.pkg.db").unwrap();
+    package_db.write_all(package.as_bytes()).expect("write failed");
+
+    let mut input = File::open("/tmp/temp")?;
+    let mut input_buffer = String::new();
+    input.read_to_string(&mut input_buffer)?;
+    Ok(())
 }
