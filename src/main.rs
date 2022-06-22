@@ -6,20 +6,20 @@ use std::fs::File;
 use nix::unistd::getuid;
 use std::env;
 
+fn open_package_database() -> std::io::Result<()> {
+    let mut file = File::create("/tmp/LJ.txt")?;
+    let buffer = "pkg";
+    file.write_all(buffer.as_bytes())?;
+
+    let mut input = File::open("/tmp/temp")?;
+    let mut input_buffer = String::new();
+    input.read_to_string(&mut input_buffer)?;
+    Ok(())
+}
+
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
     let clone_args: Vec<String> = env::args().collect(); // have an imutable version of args
-    // let mut package_db = String::new();
-    // let mut pkg_db = std::fs::File::create("/etc/elements/.pkg.db");
-
-    // pkg_db.write(b"Bytes\n").unwrap();
-
-    // pkg_db.write_all("Hi\n".as_bytes()).expect("write failed");
-
-    // package_db_path.read_to_string(&mut package_db).expect("The string cannot be read");
-
-    // println!("{:?}", pkg_db);
-
 
     if args.len() >= 2 { // detect action
         let action = &clone_args[1];
