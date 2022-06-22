@@ -7,7 +7,7 @@ use nix::unistd::getuid;
 use std::env;
 
 fn open_package_database() -> std::io::Result<()> {
-    let mut file = File::create("/tmp/LJ.txt")?;
+    let mut file = File::create("/tmp/temp")?;
     let buffer = "pkg";
     file.write_all(buffer.as_bytes())?;
 
