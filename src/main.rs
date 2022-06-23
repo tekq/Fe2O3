@@ -76,22 +76,38 @@ fn main() {
 
                     if Path::new(&path).exists() {
                         if action.to_string().eq("install"){
-                            let mut updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
+                            if updated_pkg_db.contains(&args[package_to_install]){
+                                println!("{} already installed. Reinstalling.", updated_pkg_db);
+                            } else {
+                                let mut updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
+                                write_to_package_db(updated_pkg_db);
+                            }
 
-                            write_to_package_db(updated_pkg_db);
+
                             // ver =
                             // println!("Installing package {0}-{1} {2}/{3}", &args[package_to_install], ver, package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
-                                .arg(path.to_owned() + "/build")
+                            .arg(path.to_owned() + "/build")
                                 .output()
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("remove") {
+                            if !updated_pkg_db.contains(&args[package_to_install]){
+                                println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
+                                exit(256);
+                            } else {
+                                let mut updated_pkg_db = updated_pkg_db.replace(&args[package_to_install], "");
+                                write_to_package_db(updated_pkg_db);
+                            }
+
                             println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
                                 .arg(path.to_owned() + "/remove")
                                 .output()
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("update") {
+                            if updated_pkg_db.contains(&args[package_to_install]){
+                                println!("Cannot update {}: Package not installed.", updated_pkg_db);
+                            }
                             println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
                                 .arg(path.to_owned() + "/build")
@@ -139,7 +155,6 @@ fn main() {
 
 
 fn write_to_package_db(package: String) -> std::io::Result<()> {
-    println!("Package = {}", package);
     let mut package_db = std::fs::File::create("/etc/elements/.pkg.db").unwrap();
     package_db.write_all(package.as_bytes()).expect("write failed");
 
