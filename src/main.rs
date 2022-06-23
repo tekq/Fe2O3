@@ -25,7 +25,7 @@ fn main() {
         } else if action.to_lowercase().eq("remove") {
                 // pass
         } else if action.to_lowercase().eq("update") {
-                if args.len() >= 3 {
+                if args.len() >=! 3 {
                     println!("Updating Void packages 1/3");
                     Command::new("xbps-install")
                         .arg("-Suy")
@@ -68,7 +68,7 @@ fn main() {
                 let mut package_to_install = 0;
 
                 while package_to_install < args.len() {
-                    let mut pkg_db_path = std::fs::File::open("/etc/elements/.pkg.db").unwrap();
+                    let mut pkg_db_path = File::open("/etc/elements/.pkg.db").unwrap();
                     let mut updated_pkg_db = String::new();
                     pkg_db_path.read_to_string(&mut updated_pkg_db).unwrap();
 
@@ -79,7 +79,7 @@ fn main() {
                             if updated_pkg_db.contains(&args[package_to_install]){
                                 println!("{} already installed. Reinstalling.", updated_pkg_db);
                             } else {
-                                let mut updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
+                                let updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
                                 write_to_package_db(updated_pkg_db);
                             }
 
@@ -106,7 +106,8 @@ fn main() {
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("update") {
                             if !updated_pkg_db.contains(&args[package_to_install]){
-                                println!("Cannot update {}: Package not installed.", updated_pkg_db);
+                                println!("Cannot update {}: Package not installed.", &args[package_to_install]);
+                                exit(256);
                             }
                             println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                             Command::new("bash")
@@ -155,7 +156,7 @@ fn main() {
 
 
 fn write_to_package_db(package: String) -> std::io::Result<()> {
-    let mut package_db = std::fs::File::create("/etc/elements/.pkg.db").unwrap();
+    let mut package_db = File::create("/etc/elements/.pkg.db").unwrap();
     package_db.write_all(package.as_bytes()).expect("write failed");
 
     let mut input = File::open("/tmp/temp")?;
