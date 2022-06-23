@@ -105,7 +105,7 @@ fn main() {
                                 .output()
                                 .expect("Didn't work.");
                         } else if action.to_string().eq("update") {
-                            if updated_pkg_db.contains(&args[package_to_install]){
+                            if !updated_pkg_db.contains(&args[package_to_install]){
                                 println!("Cannot update {}: Package not installed.", updated_pkg_db);
                             }
                             println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
