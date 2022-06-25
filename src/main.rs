@@ -21,136 +21,133 @@ fn main() {
 
 
         if action.to_lowercase().eq("install") { // detect action
-                // pass
+            // pass
         } else if action.to_lowercase().eq("remove") {
-                // pass
+            // pass
         } else if action.to_lowercase().eq("update") {
-                if args.len() >=! 3 {
-                    println!("Updating Void packages 1/3");
-                    Command::new("xbps-install")
-                        .arg("-Suy")
-                        .output()
-                        .expect("Couldn't execute xbps");
+            // pass
+        } else if action.to_lowercase().eq("search") {
+            // pass
+        } else {
+            println!("No argument called '{0}' found.", action);
+            exit(1);
+        }
 
-                    println!("Removing old repository 2/3");
-                    Command::new("rm")
-                        .arg("-rf")// forced recursively remove
-                        .arg("/etc/elements/repos/Nitrogen")// path to remove
-                        .output()
-                        .expect("Couldn't remove repository.");
+        if args.len() >= 3 { // detect if package is specified and install
+            args.remove(0); // remove exec name
+            args.remove(0); // remove argument
 
-                    println!("ReClone Repository 3/3");
-                    Command::new("git")
-                        .arg("clone")
-                        .arg("https://github.com/NitrogenLinux/elements-repo.git")// Nitrogen Linux's main repository
-                        .arg("/etc/elements/repos/Nitrogen")// path to clone to
-                        .output()
-                        .expect("Couldn't clone the repository.");
-
-                    println!("Update complete: err_code: 0");
+            if args.len() == 1 {
+                if action.to_lowercase().eq("search") {
+                    // search
+                    if Path::new(&("/etc/elements/repos/Nitrogen/".to_owned() + &args[0])).exists() {
+                        println!("Found {}", args[0]);
+                    } else {
+                        println!("No package called '{0}' found.", args[0]);
+                        exit(1);
+                    }
                     exit(0);
                 }
+
+                if action.to_lowercase().eq("install") {
+                    println!("Installing: {0:?}", args);
+                } else if action.to_lowercase().eq("remove") {
+                    println!("Removing: {0:?}", args);
+                } else if action.to_lowercase().eq("update") {
+                    println!("Updating: {0:?}", args);
+                }
             } else {
-                println!("No argument called '{0}' found.", action);
-                exit(1);
+                if action.to_lowercase().eq("install") {
+                    println!("Installing {0} packages: {1:?}", args.len(), args);
+                } else if action.to_lowercase().eq("remove") {
+                    println!("Removing {0} packages: {1:?}", args.len(), args);
+                } else if action.to_lowercase().eq("update") {
+                    println!("Updating {0} packages: {1:?}", args.len(), args);
+                }
             }
 
-            if args.len() >= 3 { // detect if package is specified and install
-                args.remove(0); // remove exec name
-                args.remove(0); // remove argument
+            let mut package_to_install = 0;
 
-                if args.len() == 1 {
-                   println!("{0}ing: {1:?}", action.to_lowercase(), args);
-                } else {
-                    println!("{0}ing {1} packages: {2:?}", action.to_lowercase(), args.len(), args);
-                }
+            while package_to_install < args.len() {
+                let mut pkg_db_path = File::open("/etc/elements/.pkg.db").unwrap();
+                let mut updated_pkg_db = String::new();
+                pkg_db_path.read_to_string(&mut updated_pkg_db).unwrap();
 
-                let mut package_to_install = 0;
+                let path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
 
-                while package_to_install < args.len() {
-                    let mut pkg_db_path = File::open("/etc/elements/.pkg.db").unwrap();
-                    let mut updated_pkg_db = String::new();
-                    pkg_db_path.read_to_string(&mut updated_pkg_db).unwrap();
+                if Path::new(&path).exists() {
+                    if action.to_string().eq("install") {
+                        if updated_pkg_db.contains(&args[package_to_install]) {
+                            println!("{} already installed. Reinstalling.", &args[package_to_install]);
+                        } else {
+                            let updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
+                            write_to_package_db(updated_pkg_db);
+                        }
 
-                    let path = "/etc/elements/repos/Nitrogen/".to_owned() + &args[package_to_install];
-
-                    if Path::new(&path).exists() {
-                        if action.to_string().eq("install"){
-                            if updated_pkg_db.contains(&args[package_to_install]){
-                                println!("{} already installed. Reinstalling.", updated_pkg_db);
-                            } else {
-                                let updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
-                                write_to_package_db(updated_pkg_db);
-                            }
-
-
-                            // ver =
-                            // println!("Installing package {0}-{1} {2}/{3}", &args[package_to_install], ver, package_to_install + 1, args.len()); // print action and the number of packages remaining
-                            Command::new("bash")
+                        Command::new("bash")
                             .arg(path.to_owned() + "/build")
-                                .output()
-                                .expect("Didn't work.");
-                        } else if action.to_string().eq("remove") {
-                            if !updated_pkg_db.contains(&args[package_to_install]){
-                                println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
-                                exit(256);
-                            } else {
-                                let mut updated_pkg_db = updated_pkg_db.replace(&args[package_to_install], "");
-                                write_to_package_db(updated_pkg_db);
-                            }
-
-                            println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
-                            Command::new("bash")
-                                .arg(path.to_owned() + "/remove")
-                                .output()
-                                .expect("Didn't work.");
-                        } else if action.to_string().eq("update") {
-                            if !updated_pkg_db.contains(&args[package_to_install]){
-                                println!("Cannot update {}: Package not installed.", &args[package_to_install]);
-                                exit(256);
-                            }
-                            println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
-                            Command::new("bash")
-                                .arg(path.to_owned() + "/build")
-                                .output()
-                                .expect("Didn't work.");
+                            .output()
+                            .expect("Didn't work.");
+                    } else if action.to_string().eq("remove") {
+                        if !updated_pkg_db.contains(&args[package_to_install]) {
+                            println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
+                            exit(256);
+                        } else {
+                            let updated_pkg_db = updated_pkg_db.replace(&args[package_to_install], "");
+                            write_to_package_db(updated_pkg_db);
                         }
 
+                        println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
+                        Command::new("bash")
+                            .arg(path.to_owned() + "/remove")
+                            .output()
+                            .expect("Didn't work.");
+                    } else if action.to_string().eq("update") {
+                        if !updated_pkg_db.contains(&args[package_to_install]) {
+                            println!("Cannot update {}: Package not installed.", &args[package_to_install]);
+                            exit(256);
+                        }
+                        println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
+                        Command::new("bash")
+                            .arg(path.to_owned() + "/build")
+                            .output()
+                            .expect("Didn't work.");
+                    }
+                } else {
+                    if action.eq("install") {
+                        Command::new("xbps-install")
+                            .arg("-Sy")
+                            .arg(&args[package_to_install])
+                            .output()
+                            .expect("Couldn't execute xbps");
+                    } else if action.eq("remove") {
+                        Command::new("xbps-remove")
+                            .arg("-y")
+                            .arg(&args[package_to_install])
+                            .output()
+                            .expect("Couldn't execute xbps");
+                    } else if action.eq("update") {
+                        Command::new("xbps-install")
+                            .arg("-Sy")
+                            .arg(&args[package_to_install])
+                            .output()
+                            .expect("Couldn't execute xbps");
                     } else {
-                        if action.eq("install") {
-                            Command::new("xbps-install")
-                                .arg("-Sy")
-                                .arg(&args[package_to_install])
-                                .output()
-                                .expect("Couldn't execute xbps");
-                        } else if action.eq("remove") {
-                            Command::new("xbps-remove")
-                                .arg("-y")
-                                .arg(&args[package_to_install])
-                                .output()
-                                .expect("Couldn't execute xbps");
-
-                        } else if action.eq("update") {
-                            Command::new("xbps-install")
-                                .arg("-Sy")
-                                .arg(&args[package_to_install])
-                                .output()
-                                .expect("Couldn't execute xbps");
-                        }
+                        println!("{} is not a valid action.", action);
+                        exit(1);
                     }
-
-                    package_to_install = package_to_install + 1;
-                    if package_to_install == args.len() {
-                        exit(0);
-                    }
+                    exit(0);
                 }
 
-            } else {
-                println!("No package specified to {0}.", action.to_lowercase());
-                exit(2);
+                package_to_install = package_to_install + 1;
+                if package_to_install == args.len() {
+                    exit(0);
+                }
             }
         } else {
-            println!("No command specified.");
+            println!("No package specified to {0}.", action.to_lowercase());
+            exit(2);
+        }
     }
 }
 
