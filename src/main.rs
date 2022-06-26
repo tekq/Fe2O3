@@ -1,15 +1,16 @@
-use std::process::{Command, exit};
-use std::path::Path;
-use std::io::prelude::*;
-use std::fs::File;
 use nix::unistd::getuid;
 use std::env;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+use std::process::{exit, Command};
 
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
     let clone_args: Vec<String> = env::args().collect(); // have an imutable version of args
 
-    if args.len() >= 2 { // detect action
+    if args.len() >= 2 {
+        // detect action
         let action = &clone_args[1];
 
         if getuid().to_string().eq("0") {
@@ -19,9 +20,8 @@ fn main() {
             exit(128);
         }
 
-
         if action.to_lowercase().eq("install") { // detect action
-            // pass
+             // pass
         } else if action.to_lowercase().eq("remove") {
             // pass
         } else if action.to_lowercase().eq("update") {
@@ -41,14 +41,16 @@ fn main() {
             exit(1);
         }
 
-        if args.len() >= 3 { // detect if package is specified and install
+        if args.len() >= 3 {
+            // detect if package is specified and install
             args.remove(0); // remove exec name
             args.remove(0); // remove argument
 
             if args.len() == 1 {
                 if action.to_lowercase().eq("search") {
                     // search
-                    if Path::new(&("/etc/elements/repos/Nitrogen/".to_owned() + &args[0])).exists() {
+                    if Path::new(&("/etc/elements/repos/Nitrogen/".to_owned() + &args[0])).exists()
+                    {
                         println!("Found {}", args[0]);
                     } else {
                         println!("No package called '{0}' found.", args[0]);
@@ -77,8 +79,13 @@ fn main() {
             let mut package_to_install = 0;
 
             while package_to_install < args.len() {
-                if ["elements", "gnome-core", "gnome", "linux", "xbps"].contains(&&*args[package_to_install]) {
-                    println!("Cannot remove {}: Package is required by the system.", &args[package_to_install]);
+                if ["elements", "gnome-core", "gnome", "linux", "xbps"]
+                    .contains(&&*args[package_to_install])
+                {
+                    println!(
+                        "Cannot remove {}: Package is required by the system.",
+                        &args[package_to_install]
+                    );
                     exit(256);
                 }
 
@@ -91,7 +98,10 @@ fn main() {
                 if Path::new(&path).exists() {
                     if action.to_string().eq("install") {
                         if updated_pkg_db.contains(&args[package_to_install]) {
-                            println!("{} already installed. Reinstalling.", &args[package_to_install]);
+                            println!(
+                                "{} already installed. Reinstalling.",
+                                &args[package_to_install]
+                            );
                         } else {
                             let updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
                             write_to_package_db(updated_pkg_db);
@@ -106,13 +116,22 @@ fn main() {
                         build_log_file.write_all(&build_log.stdout).unwrap();
                     } else if action.to_string().eq("remove") {
                         if updated_pkg_db.contains(&args[package_to_install]) {
-                            let updated_pkg_db = updated_pkg_db.replace(&args[package_to_install], "");
+                            let updated_pkg_db =
+                                updated_pkg_db.replace(&args[package_to_install], "");
                             write_to_package_db(updated_pkg_db);
                         } else {
-                            println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
+                            println!(
+                                "Cannot remove {}: Package not installed.",
+                                &args[package_to_install]
+                            );
                             exit(256);
                         }
-                        println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
+                        println!(
+                            "Removing package {0} {1}/{2}",
+                            &args[package_to_install],
+                            package_to_install + 1,
+                            args.len()
+                        ); // print action and the number of packages remaining
                         let remove_log = Command::new("bash")
                             .arg(path.to_owned() + "/remove")
                             .output()
@@ -122,10 +141,18 @@ fn main() {
                     }
                 } else if action.to_string().eq("update") {
                     if !updated_pkg_db.contains(&args[package_to_install]) {
-                        println!("Cannot update {}: Package not installed.", &args[package_to_install]);
+                        println!(
+                            "Cannot update {}: Package not installed.",
+                            &args[package_to_install]
+                        );
                         exit(256);
                     }
-                    println!("Updating package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
+                    println!(
+                        "Updating package {0} {1}/{2}",
+                        &args[package_to_install],
+                        package_to_install + 1,
+                        args.len()
+                    ); // print action and the number of packages remaining
                     let mut update_Log = Command::new("bash")
                         .arg(path.to_owned() + "/build")
                         .output()
@@ -183,16 +210,16 @@ fn main() {
 
                 println!("Removing old repository 2/4");
                 let p2_log = Command::new("rm")
-                    .arg("-rf")// forced recursively remove
-                    .arg("/etc/elements/repos/Nitrogen")// path to remove
+                    .arg("-rf") // forced recursively remove
+                    .arg("/etc/elements/repos/Nitrogen") // path to remove
                     .output()
                     .expect("Couldn't remove repository.");
 
                 println!("Reclone Repository 3/4");
                 let p3_log = Command::new("git")
                     .arg("clone")
-                    .arg("https://github.com/NitrogenLinux/elements-repo.git")// Nitrogen Linux's main repository
-                    .arg("/etc/elements/repos/Nitrogen")// path to clone to
+                    .arg("https://github.com/NitrogenLinux/elements-repo.git") // Nitrogen Linux's main repository
+                    .arg("/etc/elements/repos/Nitrogen") // path to clone to
                     .output()
                     .expect("Couldn't clone the repository.");
                 println!("Reinstall elements 4/4");
@@ -202,7 +229,7 @@ fn main() {
                     .output()
                     .expect("Couldn't execute curl");
                 let mv_log = Command::new("mv")
-                    .arg("-v")// verbose for logging
+                    .arg("-v") // verbose for logging
                     .arg("lmt")
                     .arg("/usr/bin/lmt") // move the file to /usr/bin/lmt
                     .output()
@@ -222,7 +249,9 @@ fn main() {
                 update_log_file.write_all(&mv_log.stdout).unwrap();
                 update_log_file.write_all(&chmod_log.stdout).unwrap();
 
-                println!("Update complete. A restart may be needed to use new libraries and/or kernels.");
+                println!(
+                    "Update complete. A restart may be needed to use new libraries and/or kernels."
+                );
                 exit(0);
             } else {
                 println!("No package specified to {0}.", action.to_lowercase());
@@ -240,10 +269,11 @@ fn main() {
     }
 }
 
-
 fn write_to_package_db(package: String) -> std::io::Result<()> {
     let mut package_db = File::create("/etc/elements/.pkg.db").unwrap();
-    package_db.write_all(package.as_bytes()).expect("write failed");
+    package_db
+        .write_all(package.as_bytes())
+        .expect("write failed");
 
     let mut input = File::open("/etc/elements/.pkg.db")?;
     let mut input_buffer = String::new();
