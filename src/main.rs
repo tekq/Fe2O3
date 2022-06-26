@@ -105,12 +105,12 @@ fn main() {
                         let mut build_log_file = File::create("/tmp/build.log").unwrap();
                         build_log_file.write_all(&build_log.stdout).unwrap();
                     } else if action.to_string().eq("remove") {
-                        if !updated_pkg_db.contains(&args[package_to_install]) {
-                            println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
-                            exit(256);
-                        } else {
+                        if updated_pkg_db.contains(&args[package_to_install]) {
                             let updated_pkg_db = updated_pkg_db.replace(&args[package_to_install], "");
                             write_to_package_db(updated_pkg_db);
+                        } else {
+                            println!("Cannot remove {}: Package not installed.", &args[package_to_install]);
+                            exit(256);
                         }
                         println!("Removing package {0} {1}/{2}", &args[package_to_install], package_to_install + 1, args.len()); // print action and the number of packages remaining
                         let remove_log = Command::new("bash")
