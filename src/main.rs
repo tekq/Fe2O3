@@ -82,7 +82,7 @@ fn main() {
 
             io::stdin().read_line(&mut input).unwrap(); // take input
 
-            if input.to_lowercase().contains("y") { // if input in lowercase contains the letter "y", therefore y/Y/yes/yep/yeah/yea_m8 should theoretically work
+            if input.to_lowercase().contains('y') { // if input in lowercase contains the letter "y", therefore y/Y/yes/yep/yeah/yea_m8 should theoretically work
                  // pass
             } else if input.len() == 1 { // if input is empty
                  // pass
