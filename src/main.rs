@@ -1,9 +1,9 @@
 use nix::unistd::getuid;
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::process::{exit, Command};
+use std::{env, io};
 
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
@@ -60,7 +60,7 @@ fn main() {
                 }
 
                 if action.to_lowercase().eq("install") {
-                    println!("Installing: {0:?}", args);
+                    println!("Installing {0:?}", args);
                 } else if action.to_lowercase().eq("remove") {
                     println!("Removing: {0:?}", args);
                 } else if action.to_lowercase().eq("update") {
@@ -76,7 +76,23 @@ fn main() {
                 }
             }
 
-            let mut package_to_install = 0;
+            print!("Continue? [y/n] "); // ask for confirmation
+            io::stdout().flush().unwrap(); // flush stdout
+            let mut input = String::new(); // create a string to store input
+
+            io::stdin().read_line(&mut input).unwrap(); // take input
+
+            if input.to_lowercase().contains("y") { // if input in lowercase contains the letter "y", therefore y/Y/yes/yep/yeah/yea_m8 should theoretically work
+                 // pass
+            } else if input.len() == 1 { // if input is empty
+                 // pass
+            } else {
+                // if input is not empty, nor yes
+                println!("Aborting."); // print abort message
+                exit(0); // exit
+            }
+
+            let mut package_to_install = 0; // create a variable to store the number of packages to install
 
             while package_to_install < args.len() {
                 if ["elements", "gnome-core", "gnome", "linux", "xbps"]
@@ -85,7 +101,7 @@ fn main() {
                     println!(
                         "Cannot remove {}: Package is required by the system.",
                         &args[package_to_install]
-                    );
+                    ); // print error message
                     exit(256);
                 }
 
@@ -107,7 +123,7 @@ fn main() {
                             write_to_package_db(updated_pkg_db);
                         }
 
-                        let mut build_log = Command::new("bash")
+                        let build_log = Command::new("bash")
                             .arg(path.to_owned() + "/build")
                             .output()
                             .expect("Didn't work.");
@@ -153,13 +169,13 @@ fn main() {
                         package_to_install + 1,
                         args.len()
                     ); // print action and the number of packages remaining
-                    let mut update_Log = Command::new("bash")
+                    let update_log = Command::new("bash")
                         .arg(path.to_owned() + "/build")
                         .output()
                         .expect("Didn't work.");
 
                     let mut update_log_file = File::create("/tmp/update.log").unwrap();
-                    update_log_file.write_all(&update_Log.stdout).unwrap();
+                    update_log_file.write_all(&update_log.stdout).unwrap();
                 } else {
                     if action.eq("install") {
                         let build_log = Command::new("xbps-install")
@@ -180,7 +196,7 @@ fn main() {
                         let mut removal_log_file = File::create("/tmp/build.log").unwrap();
                         removal_log_file.write_all(&removal_log.stdout).unwrap();
                     } else if action.eq("update") {
-                        let mut update_log = Command::new("xbps-install")
+                        let update_log = Command::new("xbps-install")
                             .arg("-Sy")
                             .arg(&args[package_to_install])
                             .output()
@@ -202,11 +218,11 @@ fn main() {
             }
         } else {
             if action.to_lowercase().eq("update") {
-                // println!("Updating Void packages 1/4");
-                // let p1_log = Command::new("xbps-install")
-                //     .arg("-Suy")
-                //     .output()
-                //     .expect("Couldn't execute xbps");
+                println!("Updating Void packages 1/4");
+                let p1_log = Command::new("xbps-install")
+                    .arg("-Suy")
+                    .output()
+                    .expect("Couldn't execute xbps");
 
                 println!("Removing old repository 2/4");
                 let p2_log = Command::new("rm")
@@ -242,7 +258,7 @@ fn main() {
                     .expect("Couldn't make the file executable.");
 
                 let mut update_log_file = File::create("/tmp/update.log").unwrap();
-                // update_log_file.write_all(&p1_log.stdout).unwrap();
+                update_log_file.write_all(&p1_log.stdout).unwrap();
                 update_log_file.write_all(&p2_log.stdout).unwrap();
                 update_log_file.write_all(&p3_log.stdout).unwrap();
                 update_log_file.write_all(&p4_log.stdout).unwrap();
