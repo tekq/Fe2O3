@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::process::{exit, Command};
 use std::{env, io};
+use words_count::WordsCount;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect(); // take args in a vector
@@ -105,7 +106,7 @@ fn main() {
                     exit(256);
                 }
 
-                let mut pkg_db_path = File::open("/etc/elements/.pkg.db").unwrap();
+                let mut pkg_db_path = File::open("/etc/elements/.sys_files/.pkg.db").unwrap();
                 let mut updated_pkg_db = String::new();
                 pkg_db_path.read_to_string(&mut updated_pkg_db).unwrap();
 
@@ -218,27 +219,31 @@ fn main() {
             }
         } else {
             if action.to_lowercase().eq("update") {
-                println!("Updating Void packages 1/4");
+                /*println!("Updating Void packages 1/5");
                 let p1_log = Command::new("xbps-install")
                     .arg("-Suy")
                     .output()
                     .expect("Couldn't execute xbps");
 
-                println!("Removing old repository 2/4");
+                println!("Removing old repository 2/5");
                 let p2_log = Command::new("rm")
                     .arg("-rf") // forced recursively remove
                     .arg("/etc/elements/repos/Nitrogen") // path to remove
                     .output()
                     .expect("Couldn't remove repository.");
 
-                println!("Reclone Repository 3/4");
+                println!("Reclone Repository 3/5");
+                Command::new("mv /etc/elements/repos/Nitrogen /etc/elements/repos/.old_Nitrogen")
+                    .output()
+                    .expect("Couldn't backup repository.");
+
                 let p3_log = Command::new("git")
                     .arg("clone")
                     .arg("https://github.com/NitrogenLinux/elements-repo.git") // Nitrogen Linux's main repository
                     .arg("/etc/elements/repos/Nitrogen") // path to clone to
                     .output()
                     .expect("Couldn't clone the repository.");
-                println!("Reinstall elements 4/4");
+                println!("Reinstall elements 4/5");
                 let p4_log = Command::new("curl")
                     .arg("-s")
                     .arg("https://api.github.com/repos/NitrogenLinux/Elements/releases/latest | grep 'browser_download_url.*lmt' | cut -d : -f 2,3 | tr -d \" | wget -qi -")// get the latest release
@@ -256,14 +261,50 @@ fn main() {
                     .arg("/usr/bin/lmt") // make the file executable
                     .output()
                     .expect("Couldn't make the file executable.");
+                 */
 
-                let mut update_log_file = File::create("/tmp/update.log").unwrap();
+                let mut pkg_db_path = File::open("/etc/elements/.sys_files/.pkg.db").unwrap();
+                let mut pkg_db = String::new();
+                pkg_db_path.read_to_string(&mut pkg_db).unwrap();
+
+                let mut packages_to_update = words_count::count_separately(&pkg_db);
+
+                let mut pkg_left = packages_to_update.len();
+
+                println!("Updating Rest of Packages 5/5");
+
+                println!("{}", pkg_db);
+
+                let tmp = pkg_db.split(' ');
+
+                let pkg_db_vec: Vec<_> = tmp.collect();
+
+                println!("{:?}", pkg_db_vec);
+
+                /* while pkg_left > 0 {
+                    // let mut version_path = File::open("/etc/elements/repos/Nitrogen/" + ).unwrap();
+                    let mut version = String::new();
+                    // version_path.read_to_string(&mut version).unwrap();
+
+                    let mut version_old_path =
+                        File::open("/etc/elements/repos/.old_Nitrogen/").unwrap();
+                    let mut version_old = String::new();
+                    version_old_path.read_to_string(&mut version_old).unwrap();
+
+                    if !version.eq(&version_old) {
+                        println!("WOOOO UPDATING BABEH");
+                    }
+
+                    pkg_left = pkg_left - 1;
+                } */
+
+                /* let mut update_log_file = File::create("/tmp/update.log").unwrap();
                 update_log_file.write_all(&p1_log.stdout).unwrap();
                 update_log_file.write_all(&p2_log.stdout).unwrap();
                 update_log_file.write_all(&p3_log.stdout).unwrap();
                 update_log_file.write_all(&p4_log.stdout).unwrap();
                 update_log_file.write_all(&mv_log.stdout).unwrap();
-                update_log_file.write_all(&chmod_log.stdout).unwrap();
+                update_log_file.write_all(&chmod_log.stdout).unwrap(); */
 
                 println!(
                     "Update complete. A restart may be needed to use new libraries and/or kernels."
@@ -286,12 +327,12 @@ fn main() {
 }
 
 fn write_to_package_db(package: String) -> std::io::Result<()> {
-    let mut package_db = File::create("/etc/elements/.pkg.db").unwrap();
+    let mut package_db = File::create("/etc/elements/.sys_files/.pkg.db").unwrap();
     package_db
         .write_all(package.as_bytes())
         .expect("write failed");
 
-    let mut input = File::open("/etc/elements/.pkg.db")?;
+    let mut input = File::open("/etc/elements/.sys_files/.pkg.db")?;
     let mut input_buffer = String::new();
     input.read_to_string(&mut input_buffer)?;
     Ok(())
