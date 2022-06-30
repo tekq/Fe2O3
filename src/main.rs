@@ -225,7 +225,7 @@ fn main() {
             }
         } else {
             if action.to_lowercase().eq("update") {
-                /*println!("Updating Void packages 1/5");
+                println!("Updating Void packages 1/5");
                 let p1_log = Command::new("xbps-install")
                     .arg("-Suy")
                     .output()
@@ -267,7 +267,6 @@ fn main() {
                     .arg("/usr/bin/lmt") // make the file executable
                     .output()
                     .expect("Couldn't make the file executable.");
-                 */
 
                 let mut pkg_db_path = File::open("/etc/elements/.sys_files/.pkg.db").unwrap();
                 let mut pkg_db = String::new();
@@ -280,13 +279,9 @@ fn main() {
 
                 println!("Updating Rest of Packages 5/5");
 
-                // println!("{}", pkg_db);
-
                 let tmp = pkg_db.split(' ');
 
                 let mut pkg_db_vec: Vec<_> = tmp.collect();
-
-                // println!("{:?}", pkg_db_vec);
 
                 let mut no_blank_spaces = false;
 
@@ -295,55 +290,72 @@ fn main() {
                 while !no_blank_spaces {
                     if pkg_db_vec[verified_slot].len() == 0 {
                         pkg_db_vec.remove(verified_slot);
-                        println!("Removed blank space.");
-                        println!("{}", verified_slot);
-                        println!("{:?}", pkg_db_vec);
-                        continue;
                     } else {
                         verified_slot = verified_slot + 1;
                     }
-                    verified_slot = verified_slot + 1;
-
-                    if verified_slot + 1 == pkg_db_vec.len() {
+                    if verified_slot == pkg_db_vec.len() {
                         no_blank_spaces = true;
                     }
                 }
 
                 while pkg_left > 0 {
-                    // let mut version_path = File::open("/etc/elements/repos/Nitrogen/" + ).unwrap();
+                    let mut version_path = File::open(
+                        "/etc/elements/repos/Nitrogen/".to_owned()
+                            + &pkg_db_vec[pkgs_done]
+                            + "/ver",
+                    )
+                    .unwrap();
                     let mut version = String::new();
-                    // version_path.read_to_string(&mut version).unwrap();
+                    version_path.read_to_string(&mut version).unwrap();
 
-                    println!("{}", pkgs_done);
+                    let mut version_old_path = File::open(
+                        "/etc/elements/repos/.old_Nitrogen/".to_owned()
+                            + pkg_db_vec[pkgs_done]
+                            + "/ver",
+                    )
+                    .unwrap();
+                    let mut version_old = String::new();
+                    version_old_path.read_to_string(&mut version_old).unwrap();
 
-                    println!("{}", pkg_db_vec[pkgs_done]);
+                    if !version.eq(&version_old) {
+                        println!(
+                            "Updating: {0} {1} => {2}",
+                            pkg_db_vec[pkgs_done], version_old, version
+                        );
 
-                    if pkg_db_vec[pkgs_done].eq("") {
-                        // println!("Emptier than my soul.");
-                    } else {
-                        println!("{}", pkg_db_vec[pkgs_done]);
+                        Command::new("bash")
+                            .arg(
+                                "/etc/elements/repos/Nitrogen/".to_owned()
+                                    + &pkg_db_vec[pkgs_done]
+                                    + "/build",
+                            )
+                            .output();
                     }
-
-                    // let mut version_old_path =
-                    //     File::open("/etc/elements/repos/.old_Nitrogen/").unwrap();
-                    // let mut version_old = String::new();
-                    // version_old_path.read_to_string(&mut version_old).unwrap();
-
-                    // if !version.eq(&version_old) {
-                    //     println!("WOOOO UPDATING BABEH");
-                    // }
 
                     pkg_left = pkg_left - 1;
                     pkgs_done = pkgs_done + 1;
                 }
 
-                /* let mut update_log_file = File::create("/tmp/update.log").unwrap();
+                let mut update_log_file = File::create("/tmp/update.log").unwrap();
                 update_log_file.write_all(&p1_log.stdout).unwrap();
                 update_log_file.write_all(&p2_log.stdout).unwrap();
                 update_log_file.write_all(&p3_log.stdout).unwrap();
                 update_log_file.write_all(&p4_log.stdout).unwrap();
                 update_log_file.write_all(&mv_log.stdout).unwrap();
-                update_log_file.write_all(&chmod_log.stdout).unwrap(); */
+                update_log_file.write_all(&chmod_log.stdout).unwrap();
+
+                Command::new("rm")
+                    .arg("-rf") // forced recursively remove
+                    .arg("/etc/elements/repos/.old_Nitrogen") // path to remove
+                    .output()
+                    .expect("Couldn't remove repository.");
+
+                Command::new("cp")
+                    .arg("-rv") // verbose for logging
+                    .arg("/etc/elements/repos/Nitrogen")
+                    .arg("/etc/elements/repos/.old_Nitrogen") // Copy new repository to old repository
+                    .output()
+                    .expect("Couldn't remove the old repository.");
 
                 println!(
                     "Update complete. A restart may be needed to use new libraries and/or kernels."
