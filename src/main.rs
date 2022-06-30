@@ -120,6 +120,12 @@ fn main() {
                                 &args[package_to_install]
                             );
                         } else {
+                            println!(
+                                "Installing package: {0} [{1}/{2}]",
+                                &args[package_to_install],
+                                package_to_install + 1,
+                                args.len()
+                            );
                             let updated_pkg_db = updated_pkg_db + &*args[package_to_install] + " ";
                             write_to_package_db(updated_pkg_db);
                         }
@@ -135,6 +141,7 @@ fn main() {
                         if updated_pkg_db.contains(&args[package_to_install]) {
                             let updated_pkg_db =
                                 updated_pkg_db.replace(&args[package_to_install], "");
+
                             write_to_package_db(updated_pkg_db);
                         } else {
                             println!(
@@ -144,7 +151,7 @@ fn main() {
                             exit(256);
                         }
                         println!(
-                            "Removing package {0} {1}/{2}",
+                            "Removing package: {0} [{1}/{2}]",
                             &args[package_to_install],
                             package_to_install + 1,
                             args.len()
@@ -211,7 +218,6 @@ fn main() {
                     }
                     exit(0);
                 }
-
                 package_to_install = package_to_install + 1;
                 if package_to_install == args.len() {
                     exit(0);
@@ -270,33 +276,66 @@ fn main() {
                 let mut packages_to_update = words_count::count_separately(&pkg_db);
 
                 let mut pkg_left = packages_to_update.len();
+                let mut pkgs_done = 0;
 
                 println!("Updating Rest of Packages 5/5");
 
-                println!("{}", pkg_db);
+                // println!("{}", pkg_db);
 
                 let tmp = pkg_db.split(' ');
 
-                let pkg_db_vec: Vec<_> = tmp.collect();
+                let mut pkg_db_vec: Vec<_> = tmp.collect();
 
-                println!("{:?}", pkg_db_vec);
+                // println!("{:?}", pkg_db_vec);
 
-                /* while pkg_left > 0 {
+                let mut no_blank_spaces = false;
+
+                let mut verified_slot = 0;
+
+                while !no_blank_spaces {
+                    if pkg_db_vec[verified_slot].len() == 0 {
+                        pkg_db_vec.remove(verified_slot);
+                        println!("Removed blank space.");
+                        println!("{}", verified_slot);
+                        println!("{:?}", pkg_db_vec);
+                        continue;
+                    } else {
+                        verified_slot = verified_slot + 1;
+                    }
+                    verified_slot = verified_slot + 1;
+
+                    if verified_slot + 1 == pkg_db_vec.len() {
+                        no_blank_spaces = true;
+                    }
+                }
+
+                while pkg_left > 0 {
                     // let mut version_path = File::open("/etc/elements/repos/Nitrogen/" + ).unwrap();
                     let mut version = String::new();
                     // version_path.read_to_string(&mut version).unwrap();
 
-                    let mut version_old_path =
-                        File::open("/etc/elements/repos/.old_Nitrogen/").unwrap();
-                    let mut version_old = String::new();
-                    version_old_path.read_to_string(&mut version_old).unwrap();
+                    println!("{}", pkgs_done);
 
-                    if !version.eq(&version_old) {
-                        println!("WOOOO UPDATING BABEH");
+                    println!("{}", pkg_db_vec[pkgs_done]);
+
+                    if pkg_db_vec[pkgs_done].eq("") {
+                        // println!("Emptier than my soul.");
+                    } else {
+                        println!("{}", pkg_db_vec[pkgs_done]);
                     }
 
+                    // let mut version_old_path =
+                    //     File::open("/etc/elements/repos/.old_Nitrogen/").unwrap();
+                    // let mut version_old = String::new();
+                    // version_old_path.read_to_string(&mut version_old).unwrap();
+
+                    // if !version.eq(&version_old) {
+                    //     println!("WOOOO UPDATING BABEH");
+                    // }
+
                     pkg_left = pkg_left - 1;
-                } */
+                    pkgs_done = pkgs_done + 1;
+                }
 
                 /* let mut update_log_file = File::create("/tmp/update.log").unwrap();
                 update_log_file.write_all(&p1_log.stdout).unwrap();
@@ -326,7 +365,7 @@ fn main() {
     }
 }
 
-fn write_to_package_db(package: String) -> std::io::Result<()> {
+fn write_to_package_db(package: String) -> io::Result<()> {
     let mut package_db = File::create("/etc/elements/.sys_files/.pkg.db").unwrap();
     package_db
         .write_all(package.as_bytes())
