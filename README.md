@@ -1,3 +1,5 @@
+# Unmaintained version, versions after v0.9 will be directly commited to NitrogenLinux/Elements 
+
 # Fe2O3
 The new Elements Beta coded in Rust.
 
