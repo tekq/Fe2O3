@@ -232,6 +232,19 @@ fn main() {
                     .expect("Couldn't execute xbps");
 
                 println!("Removing old repository 2/5");
+                Command::new("rm") // remove unnecessary files
+                    .arg("-rf")
+                    .arg("/etc/elements/repos/.old_Nitrogen")
+                    .output()
+                    .expect("Couldn't execute rm");
+
+                Command::new("cp") // copy outdated repository to .old_Nitrogen
+                    .arg("-rf") // copy the whole directory
+                    .arg("/etc/elements/repos/Nitrogen") // copy from
+                    .arg("/etc/elements/repos/.old_Nitrogen") // copy to
+                    .output()
+                    .expect("Couldn't backup repository.");
+
                 let p2_log = Command::new("rm")
                     .arg("-rf") // forced recursively remove
                     .arg("/etc/elements/repos/Nitrogen") // path to remove
@@ -239,10 +252,6 @@ fn main() {
                     .expect("Couldn't remove repository.");
 
                 println!("Reclone Repository 3/5");
-                Command::new("mv /etc/elements/repos/Nitrogen /etc/elements/repos/.old_Nitrogen")
-                    .output()
-                    .expect("Couldn't backup repository.");
-
                 let p3_log = Command::new("git")
                     .arg("clone")
                     .arg("https://github.com/NitrogenLinux/elements-repo.git") // Nitrogen Linux's main repository
@@ -262,7 +271,7 @@ fn main() {
                     .output()
                     .expect("Couldn't move the file.");
                 let chmod_log = Command::new("chmod")
-                    .arg("+x")
+                    .arg("a+x")
                     .arg("-v") // verbose for logging
                     .arg("/usr/bin/lmt") // make the file executable
                     .output()
@@ -302,16 +311,17 @@ fn main() {
                     let mut version_path = File::open(
                         "/etc/elements/repos/Nitrogen/".to_owned()
                             + &pkg_db_vec[pkgs_done]
-                            + "/ver",
+                            + "/version",
                     )
                     .unwrap();
+
                     let mut version = String::new();
                     version_path.read_to_string(&mut version).unwrap();
 
                     let mut version_old_path = File::open(
                         "/etc/elements/repos/.old_Nitrogen/".to_owned()
                             + pkg_db_vec[pkgs_done]
-                            + "/ver",
+                            + "/version",
                     )
                     .unwrap();
                     let mut version_old = String::new();
